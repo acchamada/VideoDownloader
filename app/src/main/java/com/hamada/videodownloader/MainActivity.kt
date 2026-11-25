@@ -194,6 +194,40 @@ class MainActivity : AppCompatActivity() {
                 if (!engineReady) throw IllegalStateException("المحرك غير جاهز، أعد فتح التطبيق")
                 if (!outDir.exists()) outDir.mkdirs()
 
+                // ----- Google Drive -----
+                if (DriveDownloader.isDriveLink(url)) {
+                    if (DriveDownloader.isFolder(url)) {
+                        throw DriveDownloader.DriveException(
+                            "روابط المجلدات غير مدعومة. افتح الملف داخل المجلد وانسخ رابطه."
+                        )
+                    }
+                    val target = DriveDownloader.parse(url)
+                    if (target != null) {
+                        post { setStatus("جاري التنزيل من Google Drive…") }
+                        val file = DriveDownloader.download(
+                            target, outDir,
+                            { pct, bytes ->
+                                post {
+                                    val mb = "%.1f".format(bytes / 1048576.0)
+                                    if (pct >= 0) {
+                                        progress.isIndeterminate = false
+                                        progress.setProgressCompat(pct, true)
+                                        setStatus("جاري التنزيل من Drive $pct% • $mb ميجا")
+                                    } else {
+                                        setStatus("جاري التنزيل من Drive • $mb ميجا")
+                                    }
+                                }
+                            },
+                            { cancelled }
+                        )
+                        MediaScannerConnection.scanFile(
+                            applicationContext, arrayOf(file.absolutePath), null, null
+                        )
+                        post { setStatus("تم التنزيل بنجاح ✅\n${file.name}\nفي: Download/VideoDownloader") }
+                        return@execute
+                    }
+                }
+
                 val request = YoutubeDLRequest(url)
                 request.addOption("--no-mtime")
                 request.addOption("--no-playlist")
@@ -253,8 +287,10 @@ class MainActivity : AppCompatActivity() {
                 post { setStatus("تم التنزيل بنجاح ✅\n$name\nفي: Download/VideoDownloader") }
             } catch (e: Throwable) {
                 post {
-                    if (cancelled || e is YoutubeDL.CanceledException) {
+                    if (cancelled || e is YoutubeDL.CanceledException || e is DriveDownloader.CancelledByUser) {
                         setStatus("تم الإلغاء")
+                    } else if (e is DriveDownloader.DriveException) {
+                        setStatus("فشل التنزيل ❌\n${e.message}")
                     } else {
                         setStatus(friendlyError(e))
                     }

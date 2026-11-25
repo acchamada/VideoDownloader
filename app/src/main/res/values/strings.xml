@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">منزّل الفيديو</string>
-    <string name="subtitle">يوتيوب • فيسبوك • إنستغرام • تيك توك • X وغيرها</string>
+    <string name="subtitle">يوتيوب • فيسبوك • إنستغرام • تيك توك • X • Google Drive</string>
     <string name="url_hint">الصق رابط الفيديو هنا</string>
     <string name="paste">لصق</string>
     <string name="clear">مسح</string>
@@ -14,5 +14,5 @@
     <string name="cancel">إلغاء</string>
     <string name="open_folder">فتح مجلد التنزيلات</string>
     <string name="update_engine">تحديث محرك التنزيل</string>
-    <string name="tip">نصيحة: من داخل يوتيوب أو فيسبوك اضغط "مشاركة" واختر "منزّل الفيديو" ليبدأ التنزيل تلقائياً. الملفات تُحفظ في مجلد Download/VideoDownloader وتظهر في المعرض.</string>
+    <string name="tip">نصيحة: من داخل يوتيوب أو فيسبوك اضغط "مشاركة" واختر "منزّل الفيديو" ليبدأ التنزيل تلقائياً. الملفات تُحفظ في مجلد Download/VideoDownloader وتظهر في المعرض. روابط Google Drive تنزل بصيغتها الأصلية (المستندات بصيغة PDF والجداول Excel)، بشرط أن يكون الملف مشتركاً والتنزيل مسموحاً.</string>
 </resources>
