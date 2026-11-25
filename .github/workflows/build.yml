@@ -40,25 +40,22 @@ jobs:
           name: VideoDownloader-apk
           path: out/*.apk
 
-      - name: Publish release
+      - name: Publish to apk branch (reliable, bypasses Releases API)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir pub && cp out/*.apk pub/
+          cd pub
+          git init -q
+          git checkout -q -b apk
+          git add .
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "APK build v1.0.${{ github.run_number }}"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" apk
+
+      - name: Publish GitHub release (best effort)
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v1.0.${{ github.run_number }}"
-          TITLE="منزّل الفيديو $TAG"
-          NOTES="حمّل VideoDownloader.apk لمعظم الجوالات الحديثة. للجوالات القديمة: VideoDownloader-old-phones.apk"
-          # حذف المسودات العالقة من محاولات سابقة
-          for t in $(gh release list --limit 50 --json tagName,isDraft -q '.[]|select(.isDraft)|.tagName'); do
-            [ "$t" != "$TAG" ] && gh release delete "$t" -y --cleanup-tag || true
-          done
-          ok=0
-          for i in 1 2 3 4 5 6; do
-            if gh release view "$TAG" >/dev/null 2>&1; then
-              gh release upload "$TAG" out/*.apk --clobber && \
-              gh release edit "$TAG" --draft=false --latest && ok=1 && break
-            else
-              gh release create "$TAG" out/*.apk --title "$TITLE" --notes "$NOTES" --target "$GITHUB_SHA" --latest && ok=1 && break
-            fi
-            echo "retry $i"; sleep 30
-          done
-          [ "$ok" = 1 ]
+          gh release create "$TAG" out/*.apk --title "منزّل الفيديو $TAG" --notes "حمّل VideoDownloader.apk" --target "$GITHUB_SHA" --latest || true
