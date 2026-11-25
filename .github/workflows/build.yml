@@ -41,12 +41,24 @@ jobs:
           path: out/*.apk
 
       - name: Publish release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: منزّل الفيديو v1.0.${{ github.run_number }}
-          body: |
-            حمّل **VideoDownloader.apk** (لمعظم الجوالات الحديثة).
-            إذا لم يعمل على جوال قديم، حمّل **VideoDownloader-old-phones.apk**.
-          files: out/*.apk
-          make_latest: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v1.0.${{ github.run_number }}"
+          TITLE="منزّل الفيديو $TAG"
+          NOTES="حمّل VideoDownloader.apk لمعظم الجوالات الحديثة. للجوالات القديمة: VideoDownloader-old-phones.apk"
+          # حذف المسودات العالقة من محاولات سابقة
+          for t in $(gh release list --limit 50 --json tagName,isDraft -q '.[]|select(.isDraft)|.tagName'); do
+            [ "$t" != "$TAG" ] && gh release delete "$t" -y --cleanup-tag || true
+          done
+          ok=0
+          for i in 1 2 3 4 5 6; do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              gh release upload "$TAG" out/*.apk --clobber && \
+              gh release edit "$TAG" --draft=false --latest && ok=1 && break
+            else
+              gh release create "$TAG" out/*.apk --title "$TITLE" --notes "$NOTES" --target "$GITHUB_SHA" --latest && ok=1 && break
+            fi
+            echo "retry $i"; sleep 30
+          done
+          [ "$ok" = 1 ]
